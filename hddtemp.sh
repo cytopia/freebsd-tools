@@ -8,9 +8,16 @@
 # ----------------------------------------------------------------------------
 #
 
+# Check if we are root
+if [ "$(id -u)" != "0" ]; then
+        echo "This script must be run as root" 1>&2
+exit 1
+fi
+
+# Check if smartctl exists on the system
+command -v smartctl >/dev/null  || { echo "smartctl not found. (install sysutils/smartmontools)"; exit 1; }
 
 # Get all attached devices (one per line)
-# and store them temporarily
 DEVLIST=`egrep 'ad[0-9]|cd[0-9]' /var/run/dmesg.boot | awk '{sub(/:/, ""); print $1}'`
 
 # Loop through all lines
