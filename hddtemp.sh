@@ -17,12 +17,16 @@ DEVLIST=`egrep 'ad[0-9]|cd[0-9]' /var/run/dmesg.boot | awk '{sub(/:/, ""); print
 while read line
 do
         dev=$line
-        bus=`dmesg |grep "${dev} at" |grep target | awk '{print $3}'`
+        bus=`cat /var/run/dmesg.boot |grep "${dev} at" |grep target | awk '{print $3}'`
         name=`camcontrol identify /dev/${dev} | grep "device model" | awk '{ $1=$2=""; print $0}'`
         temp=`smartctl -d atacam -A /dev/${dev} | grep Temperature_Celsius | awk '{print $10}'`
 
-        echo -e "$temp C\t${bus}:${dev}\t${name}"
+        case $temp in
+                ''|*[!0-9]*) temp="n.a." ;;
+                *) temp="${temp} C" ;;
+        esac
+
+        echo -e "$temp\t${bus}:${dev}\t${name}"
 
 done < /tmp/hddtemp.tmp
 rm /tmp/hddtemp.tmp
-
