@@ -18,7 +18,8 @@ fi
 command -v smartctl >/dev/null  || { echo "smartctl not found. (install sysutils/smartmontools)"; exit 1; }
 
 # Get all attached devices (one per line)
-DEVLIST=`sysctl kern.disks | awk '{$1=""; ;print $0}'`
+DEVLIST=`sysctl kern.disks | awk '{$1=""; ;print $0}' | awk 'gsub(" ", "\n")' | tail -n500 -r`
+
 # Loop through all lines
 for dev in $DEVLIST
 do
