@@ -11,7 +11,7 @@
 
 # Get all attached devices (one per line)
 # and store them temporarily
-DEVLIST=`camcontrol devlist | awk '{print $NF;}' | awk '{sub(/,/, " "); sub(/\(/, ""); print $1}' > /tmp/hddtemp.tmp`
+DEVLIST=`egrep 'ad[0-9]|cd[0-9]' /var/run/dmesg.boot | awk '{sub(/:/, ""); print $1}' > /tmp/hddtemp.tmp`
 
 # Loop through all lines
 while read line
