@@ -18,12 +18,11 @@ fi
 command -v smartctl >/dev/null  || { echo "smartctl not found. (install sysutils/smartmontools)"; exit 1; }
 
 # Get all attached devices (one per line)
-DEVLIST=`egrep 'ad[0-9]|cd[0-9]' /var/run/dmesg.boot | awk '{sub(/:/, ""); print $1}'`
-
+DEVLIST=`sysctl kern.disks | awk '{$1=""; ;print $0}'`
 # Loop through all lines
-for line in $DEVLIST
+for dev in $DEVLIST
 do
-        dev=$line
+
         bus=`cat /var/run/dmesg.boot |grep "${dev} at" |grep target | awk '{print $3}'`
         name=`camcontrol identify /dev/${dev} | grep "device model" | awk '{ $1=$2=""; print $0}'`
         temp=`smartctl -d atacam -A /dev/${dev} | grep Temperature_Celsius | awk '{print $10}'`
@@ -34,5 +33,4 @@ do
         esac
 
         echo -e "$temp\t${bus}:${dev}\t${name}"
-
 done
