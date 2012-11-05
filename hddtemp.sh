@@ -11,10 +11,10 @@
 
 # Get all attached devices (one per line)
 # and store them temporarily
-DEVLIST=`egrep 'ad[0-9]|cd[0-9]' /var/run/dmesg.boot | awk '{sub(/:/, ""); print $1}' > /tmp/hddtemp.tmp`
+DEVLIST=`egrep 'ad[0-9]|cd[0-9]' /var/run/dmesg.boot | awk '{sub(/:/, ""); print $1}'`
 
 # Loop through all lines
-while read line
+for line in $DEVLIST
 do
         dev=$line
         bus=`cat /var/run/dmesg.boot |grep "${dev} at" |grep target | awk '{print $3}'`
@@ -28,5 +28,4 @@ do
 
         echo -e "$temp\t${bus}:${dev}\t${name}"
 
-done < /tmp/hddtemp.tmp
-rm /tmp/hddtemp.tmp
+done
