@@ -38,10 +38,16 @@ do
 
                 # check for HP Smart Array controllers
                 if [ $bus == "ciss*" ]; then
-                        devnum=`echo ${dev} | sed 's/[^0-9]*//g'`
-                        temp=`smartctl -d -T permissive -d cciss,${devnum} /dev/${bus} |  grep Temperature_Celsius | awk '{print $10}'`
+                                tmp_file="/tmp/hddtemp_smartctl.tmp"
+                                devnum=`echo ${dev} | sed 's/[^0-9]*//g'`
+                                `smartctl -a -T permissive -d cciss,${devnum} /dev/${bus} > ${tmp_file} 2> /dev/null`
+                                name=`cat ${tmp_file} | grep "Device Model" | awk '{$1=$2=""} {sub(/^[ \t]+/, ""); print;}'`
+                                firm=`cat ${tmp_file} | grep "Firmware" | awk ' {$1=$2=""} {sub(/^[ \t]+/, ""); print;}'`
+                                temp=`cat ${tmp_file} | grep Temperature_Celsius | awk '{print $10}'`
+                                rm ${tmp_file}
+                        name="${name} ${firm}"
                 else
-                        temp=`smartctl -d atacam -A /dev/${dev} | grep Temperature_Celsius | awk '{print $10}'`
+                    temp=`smartctl -d atacam -A /dev/${dev} | grep Temperature_Celsius | awk '{print $10}'`
                 fi
 
                 #temp=`smartctl -d atacam -A /dev/${dev} | grep Temperature_Celsius | awk '{print $10}'`
