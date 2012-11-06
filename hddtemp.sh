@@ -39,7 +39,7 @@ do
                 # check for HP Smart Array controllers
                 if [ $bus == "ciss*" ]; then
                         devnum=`echo ${dev} | sed 's/[^0-9]*//g'`
-                        temp=`smartctl -d -T permissive -d cciss,${devnum} /dev/${bus}`
+                        temp=`smartctl -d -T permissive -d cciss,${devnum} /dev/${bus} |  grep Temperature_Celsius | awk '{print $10}'`
                 else
                         temp=`smartctl -d atacam -A /dev/${dev} | grep Temperature_Celsius | awk '{print $10}'`
                 fi
@@ -64,4 +64,3 @@ do
 
         echo -e "$temp\t${bus}:${dev}\t${speed}\t${name} (${size}G)"
 done
-
