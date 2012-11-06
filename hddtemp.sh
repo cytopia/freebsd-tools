@@ -17,6 +17,13 @@ fi
 # Check if smartctl exists on the system
 command -v smartctl >/dev/null  || { echo "smartctl not found. (install sysutils/smartmontools)"; exit 1; }
 
+
+# Colors
+GREEN="\033[32m"
+YELLOW="\033[33m"
+RED="\033[31m"
+OFF="\033[0m"
+
 # Get all attached devices (one per line)
 DEVLIST=`sysctl kern.disks | awk '{$1=""; ;print $0}' | awk 'gsub(" ", "\n")' | tail -n500 -r`
 
@@ -29,9 +36,21 @@ do
         temp=`smartctl -d atacam -A /dev/${dev} | grep Temperature_Celsius | awk '{print $10}'`
 
         case $temp in
-                ''|*[!0-9]*) temp="n.a." ;;
-                *) temp="${temp} C" ;;
+                ''|*[!0-9]*)
+                                        temp="n.a."
+                                        ;;
+                *)
+                                        if [ $temp -gt 40 ]; then
+                                                temp="${RED}${temp} C${OFF}"
+                                        elif [ $temp -gt 30 ]; then
+                                                temp="${YELLOW}${temp} C${OFF}"
+                                        else
+
+                                                temp="${GREEN}${temp} C${OFF}"
+                                        fi
+                                        ;;
         esac
 
         echo -e "$temp\t${bus}:${dev}\t${name} (${size}G)"
 done
+
