@@ -31,8 +31,10 @@ DEVLIST=`sysctl kern.disks | awk '{$1=""; ;print $0}' | awk 'gsub(" ", "\n")' | 
 for dev in $DEVLIST
 do
         size=`diskinfo -v /dev/${dev} | grep bytes | awk '{printf "%.2f\n",($1/(1024*1024*1024))}'`
-        bus=`cat /var/run/dmesg.boot |grep "${dev} at" |grep target | awk '{print $3}'`
-        name=`camcontrol identify /dev/${dev} | grep "device model" | awk '{ $1=$2=""; print $0}'`
+        bus=`cat /var/run/dmesg.boot | grep "${dev} at" |grep target | awk '{print $3}'`
+        # get names via dmesg instead of camcontrol and also include firmware revision
+                name=`cat /var/run/dmesg.boot |grep ${dev}: | grep "<"|grep ">"  | awk 'gsub(/<|>/, "\n");' | awk 'NR==2'`
+                #name=`camcontrol identify /dev/${dev} | grep "device model" | awk '{ $1=$2=""; print $0}'`
         temp=`smartctl -d atacam -A /dev/${dev} | grep Temperature_Celsius | awk '{print $10}'`
 
         case $temp in
