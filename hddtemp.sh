@@ -35,8 +35,17 @@ do
         # get names via dmesg instead of camcontrol and also include firmware revision
                 name=`cat /var/run/dmesg.boot |grep ${dev}: | grep "<"|grep ">"  | awk 'gsub(/<|>/, "\n");' | awk 'NR==2'`
                 #name=`camcontrol identify /dev/${dev} | grep "device model" | awk '{ $1=$2=""; print $0}'`
-        temp=`smartctl -d atacam -A /dev/${dev} | grep Temperature_Celsius | awk '{print $10}'`
 
+                # check for HP Smart Array controllers
+                if [ $bus == "ciss*" ]; then
+                        devnum=`echo ${dev} | sed 's/[^0-9]*//g'`
+                        temp=`smartctl -d -T permissive -d cciss,${devnum} /dev/${bus}`
+                else
+                        temp=`smartctl -d atacam -A /dev/${dev} | grep Temperature_Celsius | awk '{print $10}'`
+                fi
+
+                #temp=`smartctl -d atacam -A /dev/${dev} | grep Temperature_Celsius | awk '{print $10}'`
+                speed=`cat /var/run/dmesg.boot |grep ${dev}: | grep transfers | awk '{print $2};'`
         case $temp in
                 ''|*[!0-9]*)
                                         temp="n.a."
@@ -53,6 +62,6 @@ do
                                         ;;
         esac
 
-        echo -e "$temp\t${bus}:${dev}\t${name} (${size}G)"
+        echo -e "$temp\t${bus}:${dev}\t${speed}\t${name} (${size}G)"
 done
 
