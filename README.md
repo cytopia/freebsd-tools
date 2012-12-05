@@ -2,7 +2,7 @@ hddtemp
 =======
 
 FreeBSD tool to trigger the temperature of all attached hdd's
-
+Data is presented in a nice colorized way (green, yellow and red)
 
 Requirements:
 ------------------
