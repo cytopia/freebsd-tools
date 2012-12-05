@@ -73,7 +73,7 @@ colorize_temperature()
 #
 get_attached_devices()
 {
-	DEVS=`sysctl kern.disks | awk '{$1=""; ;print $0}' | awk 'gsub(" ", "\n")' | tail -n500 -r`
+	DEVS=`sysctl kern.disks | awk '{$1=""; ;print $0}' | awk 'gsub(" ", "\n")' | tail -n500 -r | sed '/^cd[0-9]/d'`
 	echo $DEVS
 }
 
