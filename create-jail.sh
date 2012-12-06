@@ -84,58 +84,65 @@ jail_create_rc_conf()
 
 INSTALL_DIR=$1
 
+# Check if we are root
+if [ "$(id -u)" != "0" ]; then
+	echo "This script must be run as root" 1>&2
+	exit 1
+fi
+
+
 # check for correct number of parameters
 if [ $# != 1 ]; then
-        echo "Illegal number of arguments"
-        echo ""
-        echo "Usage:"
-        echo "    ${0} /path/to/new/jail"
-        exit;
+	echo "Illegal number of arguments"
+	echo ""
+	echo "Usage:"
+	echo "    ${0} /path/to/new/jail"
+	exit;
 fi
 
 
 # ask for requirements
 read -r -p "Did you already do a 'make buildworld' in /usr/src ? [Y/n] " response
 case $response in
-        [yY][eE][sS]|[yY])
-                echo "good :-)"
-                ;;
-        *)
-                echo "This is required. Good Bye!"
-                exit
-                ;;
+	[yY][eE][sS]|[yY])
+		echo "good :-)"
+		;;
+	*)
+		echo "This is required. Good Bye!"
+		exit
+		;;
 esac
 
 
 # Check if directory exists
 if [ ! -d "$INSTALL_DIR" ]; then
-    echo "$INSTALL_DIR does not exist"
-    echo "Please create it first"
-        exit
+	echo "$INSTALL_DIR does not exist"
+	echo "Please create it first"
+	exit
 fi
 
 
 # Check if directory is already used (not empty)
 if [ "$(ls -A $INSTALL_DIR)" ]; then
-    echo "The directory $INSTALL_DIR is not empty."
-    echo "Make sure to specify an empty unused directory"
-    exit
+	echo "The directory $INSTALL_DIR is not empty."
+	echo "Make sure to specify an empty unused directory"
+	exit
 fi
 
 
 echo "Going to create a new jail in $INSTALL_DIR"
 read -r -p "Are you sure? [Y/n] " response
 case $response in
-        [yY][eE][sS]|[yY])
-                jail_install $INSTALL_DIR
-                jail_create_fstab $INSTALL_DIR
-                jail_create_resolv_conf $INSTALL_DIR
-                jail_create_rc_conf $INSTALL_DIR
-                echo ""
-                echo "done"
-                ;;
-        *)
-                echo "Good Bye!"
-                exit
-                ;;
+	[yY][eE][sS]|[yY])
+		jail_install $INSTALL_DIR
+		jail_create_fstab $INSTALL_DIR
+		jail_create_resolv_conf $INSTALL_DIR
+		jail_create_rc_conf $INSTALL_DIR
+		echo ""
+		echo "done"
+		;;
+	*)
+		echo "Good Bye!"
+		exit
+		;;
 esac
