@@ -10,124 +10,144 @@
 
 
 
-# ---------------------------------- Global Variables --------------------------------- #
+# ---------------------------------- Misc Functions --------------------------------- #
+
+show_usage()
+{
+	script=$1
+	echo "Usage:"
+	echo "    ${script} /path/to/new/jail_name"
+}
+
+
+#
+# Prequisites,
+#
+check_requirements()
+{
+	jail_path=$1
+	num_args=$2
+
+	# 01) Check if we are root
+	if [ "$(id -u)" != "0" ]; then
+		echo "This script must be run as root" 1>&2
+		exit
+	fi
+
+	# 02) check for correct number of parameters
+	if [ "$num_args" != "1" ]; then
+		echo "Illegal number of arguments"
+		show_usage $0
+		exit
+	fi
+
+	# 03) Check if directory exists
+	if [ ! -d "$jail_path" ]; then
+		echo "$jail_path does not exist"
+		echo "Please create it first"
+		exit
+	fi
+
+	# 04) Check if directory is already used (not empty)
+	if [ "$(ls -A $jail_path)" ]; then
+		echo "The directory $jail_path is not empty."
+		echo "Make sure to specify an empty (unused) directory"
+		exit
+	fi
+
+	# 05) ask for requirements
+	read -r -p "Did you already do a 'make buildworld' in /usr/src ? [Y/n] " response
+	case $response in
+		[yY][eE][sS]|[yY])
+			echo "good :-)"
+			;;
+		*)
+			echo "This is required. Good Bye!"
+			exit
+			;;
+	esac
+}
+
+
+
+# ---------------------------------- Action Functions --------------------------------- #
 
 jail_install()
 {
-        path=$1
-        echo ""
-        echo "------------------------- INSTALLING SOURCE -------------------------"
-        echo ""
+	jail_path=$1
+	echo ""
+	echo "------------------------- INSTALLING SOURCE -------------------------"
+	echo ""
 
-        echo "cd /usr/src"
-        cd /usr/src
-        echo "make installworld DESTDIR=${path}"
-        make installworld DESTDIR=$path
-        echo "cd /usr/src/etc"
-        cd /usr/src/etc
-        echo "make distribution DESTDIR=${path}"
-        make distribution DESTDIR=$path
+	cd /usr/src
+	make installworld DESTDIR=$jail_path
+	cd /usr/src/etc
+	make distribution DESTDIR=$jail_path
 }
 
-
-jail_create_fstab()
+jail_create_configs()
 {
-        path=$1
-        echo ""
-        echo "------------------------- CREATING /etc/fstab -------------------------"
-        echo ""
+	jail_path=$1
+	echo ""
+	echo "------------------------- CREATING jail configs -------------------------"
+	echo ""
 
-        echo "touch ${path}/etc/fstab"
-        touch $path/etc/fstab
+	touch $jail_path/etc/fstab
+	touch $jail_path/etc/resolv.conf
+	touch $jail_path/etc/rc.conf
+
+	echo "#disable remote logging" >> $jail_path/etc/rc.conf
+	echo "syslogd_enable=\"YES\"" >> $jail_path/etc/rc.conf
+	echo "syslogd_flags=\"-ss\"" >> $jail_path/etc/rc.conf
+	echo "" >> $jail_path/etc/rc.conf
+	echo "#disable sendmail" >> $jail_path/etc/rc.conf
+	echo "sendmail_enable=\"NONE\"" >> $jail_path/etc/rc.conf
+	echo "" >> $jail_path/etc/rc.conf
+	echo "#disable rpc bind" >> $jail_path/etc/rc.conf
+	echo "rpcbind_enable=\"NO\"" >> $jail_path/etc/rc.conf
+	echo "" >> $jail_path/etc/rc.conf
+	echo "#prevent lots of jails running cron jobs at the same time" >> $jail_path/etc/rc.conf
+	echo "cron_flags=\"\$cront_flags -J 15\"" >> $jail_path/etc/rc.conf
+	echo "" >> $jail_path/etc/rc.conf
+	echo "#clear /tmp " >> $jail_path/etc/rc.conf
+	echo "clear_tmp_enable=\"YES\"" >> $jail_path/etc/rc.conf
 }
 
-jail_create_resolv_conf()
+host_create_configs()
 {
-        path=$1
-        echo ""
-        echo "------------------------- CREATING /etc/resolv.conf -------------------------"
-        echo ""
-        echo "touch ${path}/etc/resolv.conf"
-        touch $path/etc/resolv.conf
-}
+	jail_path=$1
+	jail_base="$(dirname "$jail_path")"
+	jail_name="$(basename "$jail_path")"
+	jail_path="${jail_base}/${jail_name}" # prevent double slashes
+	
+	host_fstab="${jail_base}/fstab.${jail_name}"
+	port_mount="/usr/ports       ${jail_path}/usr/ports       nullfs noatime,rw 0 0"
+	portsnap_mount="/var/db/portsnap ${jail_path}/var/db/portsnap nullfs noatime,rw 0 0"
 
-jail_create_rc_conf()
-{
-        path=$1
-        echo ""
-        echo "------------------------- CREATING /etc/rc.conf -------------------------"
-        echo ""
-        echo "touch ${path}/etc/rc.conf"
-        touch $path/etc/rc.conf
+	echo ""
+	echo "------------------------- CREATING host configs -------------------------"
+	echo ""
 
-        echo "writing default values to rc.conf"
-
-        echo "#disable remote logging" >> $path/etc/rc.conf
-        echo "syslogd_enable=\"YES\"" >> $path/etc/rc.conf
-        echo "syslogd_flags=\"-ss\"" >> $path/etc/rc.conf
-        echo "" >> $path/etc/rc.conf
-        echo "#disable sendmail" >> $path/etc/rc.conf
-        echo "sendmail_enable=\"NONE\"" >> $path/etc/rc.conf
-        echo "" >> $path/etc/rc.conf
-        echo "#disable rpc bind" >> $path/etc/rc.conf
-        echo "rpcbind_enable=\"NO\"" >> $path/etc/rc.conf
-        echo "" >> $path/etc/rc.conf
-        echo "#prevent lots of jails running cron jobs at the same time" >> $path/etc/rc.conf
-        echo "cron_flags=\"\$cront_flags -J 15\"" >> $path/etc/rc.conf
-        echo "" >> $path/etc/rc.conf
-        echo "#clear /tmp " >> $path/etc/rc.conf
-        echo "clear_tmp_enable=\"YES\"" >> $path/etc/rc.conf
+	# create host fstab for jail
+	touch $host_fstab
+	
+	# automount ports and portsnap
+	echo "${port_mount}" >> $host_fstab
+	echo "${portsnap_mount}" >> $host_fstab
 }
 
 
-# ------------------------------------- Pre-Checks ------------------------------------- #
+
+
+# ------------------------------------- Vars ------------------------------------- #
 
 INSTALL_DIR=$1
-
-# Check if we are root
-if [ "$(id -u)" != "0" ]; then
-	echo "This script must be run as root" 1>&2
-	exit 1
-fi
+NUM_ARGS=$#
 
 
-# check for correct number of parameters
-if [ $# != 1 ]; then
-	echo "Illegal number of arguments"
-	echo ""
-	echo "Usage:"
-	echo "    ${0} /path/to/new/jail"
-	exit;
-fi
+# ------------------------------------- Main Entry Point ------------------------------------- #
 
-
-# ask for requirements
-read -r -p "Did you already do a 'make buildworld' in /usr/src ? [Y/n] " response
-case $response in
-	[yY][eE][sS]|[yY])
-		echo "good :-)"
-		;;
-	*)
-		echo "This is required. Good Bye!"
-		exit
-		;;
-esac
-
-
-# Check if directory exists
-if [ ! -d "$INSTALL_DIR" ]; then
-	echo "$INSTALL_DIR does not exist"
-	echo "Please create it first"
-	exit
-fi
-
-
-# Check if directory is already used (not empty)
-if [ "$(ls -A $INSTALL_DIR)" ]; then
-	echo "The directory $INSTALL_DIR is not empty."
-	echo "Make sure to specify an empty unused directory"
-	exit
-fi
+check_requirements $INSTALL_DIR $NUM_ARGS
 
 
 echo "Going to create a new jail in $INSTALL_DIR"
@@ -135,9 +155,8 @@ read -r -p "Are you sure? [Y/n] " response
 case $response in
 	[yY][eE][sS]|[yY])
 		jail_install $INSTALL_DIR
-		jail_create_fstab $INSTALL_DIR
-		jail_create_resolv_conf $INSTALL_DIR
-		jail_create_rc_conf $INSTALL_DIR
+		jail_create_configs $INSTALL_DIR
+		host_create_configs $INSTALL_DIR
 		echo ""
 		echo "done"
 		;;
