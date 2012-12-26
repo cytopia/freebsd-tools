@@ -1,4 +1,4 @@
-hddtemp
+hdd-temp
 =======
 
 FreeBSD tool to trigger the temperature of all attached hdd's
@@ -20,3 +20,14 @@ Requirements:
 ------------------
 * /usr/src must be compiled
 * must be run as root
+
+
+zfs-snapshot
+=======
+
+An automated zfs snapshot creation script, Ideally used for cron.
+Let's you specify which zfs filesystem to snapshot and also how many old snapshots to keep.
+
+Requirements:
+------------------
+* ZFS ;-)
