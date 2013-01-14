@@ -7,6 +7,16 @@
 # this stuff is worth it, you can buy me a beer in return Pantu
 # ----------------------------------------------------------------------------
 #
+# To use as previous version in samba:
+#   follow symlinks     = yes
+#   wide links          = yes
+#   vfs objects         = shadow_copy2
+#   shadow:snapdir      = .zfs/snapshot
+#   shadow:localtime    = yes               ; use local server timezone rather than GMT
+#   shadow:sort         = desc              ; descending sort makes more sense
+#   shadow:format       = %Y-%m-%d_%H.%M.%S ; format (see below for LABEL) - They must match!!
+#
+
 
 
 # ------------------- Settings -------------------
@@ -34,7 +44,7 @@ EXPR="/bin/expr"
 # ------------------- Create new snapshot -------------------
 
 # Label to use for snapshot
-LABEL=`${DATE} +"%F"`
+LABEL=`${DATE} +"%Y-%m-%d_%H.%M.%S"`
 `${ZFS} snapshot ${FILESYSTEM}@${LABEL}`
 
 
