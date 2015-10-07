@@ -2,9 +2,9 @@
 #
 # ----------------------------------------------------------------------------
 # "THE BEER-WARE LICENSE" (Revision 42):
-# <pantu39@gmail.com> wrote this file. As long as you retain this notice you
+# <cytopia@everythingcli.org> wrote this file. As long as you retain this notice you
 # can do whatever you want with this stuff. If we meet some day, and you think
-# this stuff is worth it, you can buy me a beer in return Pantu
+# this stuff is worth it, you can buy me a beer in return cytopia
 # ----------------------------------------------------------------------------
 #
 # To use as previous version in samba:
